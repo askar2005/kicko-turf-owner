@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-route
 import { useEffect, useState } from "react";
 import Login from "./components/Login";
 import AdminDashboard from "./components/AdminDashboard";
-import KYCForm from "./components/KYCForm";
 import QRScanner from "./components/QRScanner";
 import Settings from "./components/Settings";
 import TurfSlotManager from "./components/TurfSlotManager";
@@ -28,11 +27,7 @@ function LoginPage() {
 
   useEffect(() => {
     if (isAuthed) {
-      if (localStorage.getItem("kicko_kyc_status")) {
-        nav("/admin", { replace: true });
-      } else {
-        nav("/kyc", { replace: true });
-      }
+      nav("/admin", { replace: true });
     }
   }, [isAuthed, nav]);
 
@@ -40,27 +35,12 @@ function LoginPage() {
     localStorage.setItem("kicko_admin_authed", "true");
     localStorage.setItem("kicko_admin_profile", JSON.stringify(admin));
     setIsAuthed(true);
-
-    if (localStorage.getItem("kicko_kyc_status")) {
-      nav("/admin", { replace: true });
-    } else {
-      nav("/kyc", { replace: true });
-    }
+    nav("/admin", { replace: true });
   };
   return <Login onAdminLoginSuccess={handleSuccess} />;
 }
 
-function KYCPage() {
-  const nav = useNavigate();
-  const { isAuthed } = useAdminAuth();
 
-  useEffect(() => {
-    if (!isAuthed) nav("/login", { replace: true });
-  }, [isAuthed, nav]);
-
-  if (!isAuthed) return null;
-  return <KYCForm />;
-}
 
 function AdminPage() {
   const nav = useNavigate();
@@ -69,16 +49,12 @@ function AdminPage() {
   useEffect(() => {
     if (!isAuthed) {
       nav("/login", { replace: true });
-    } else if (!localStorage.getItem("kicko_kyc_status")) {
-      nav("/kyc", { replace: true });
     }
   }, [isAuthed, nav]);
 
   const onLogout = () => {
     localStorage.removeItem("kicko_admin_authed");
     localStorage.removeItem("kicko_admin_profile");
-    localStorage.removeItem("kicko_kyc_status");
-    localStorage.removeItem("kicko_razorpay_account_id");
     setIsAuthed(false);
     nav("/login", { replace: true });
   };
@@ -94,8 +70,6 @@ function ScanPage() {
   useEffect(() => {
     if (!isAuthed) {
       nav("/login", { replace: true });
-    } else if (!localStorage.getItem("kicko_kyc_status")) {
-      nav("/kyc", { replace: true });
     }
   }, [isAuthed, nav]);
 
@@ -124,8 +98,6 @@ function TurfSlotManagerPage() {
   useEffect(() => {
     if (!isAuthed) {
       nav("/login", { replace: true });
-    } else if (!localStorage.getItem("kicko_kyc_status")) {
-      nav("/kyc", { replace: true });
     }
   }, [isAuthed, nav]);
 
@@ -139,7 +111,6 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/kyc" element={<KYCPage />} />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/admin/turf/:turfId" element={<TurfSlotManagerPage />} />
         <Route path="/admin/scan" element={<ScanPage />} />

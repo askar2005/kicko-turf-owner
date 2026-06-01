@@ -18,12 +18,12 @@ export default function Login({ onAdminLoginSuccess }: LoginProps) {
   const [email, setEmail] = useState("");
   const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
-  
+
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [otpStep, setOtpStep] = useState(false);
   const [otp, setOtp] = useState(["", "", "", ""]);
-  
+
   // Forgot password states
   const [forgotStep, setForgotStep] = useState<'none' | 'email' | 'reset'>('none');
   const [forgotOtp, setForgotOtp] = useState(["", "", "", ""]);
@@ -42,7 +42,7 @@ export default function Login({ onAdminLoginSuccess }: LoginProps) {
 
     try {
       setLoading(true);
-      
+
       if (isLogin) {
         // Standard Login
         const res = await fetch("http://localhost:5000/api/auth/owner/login", {
@@ -76,7 +76,7 @@ export default function Login({ onAdminLoginSuccess }: LoginProps) {
     try {
       setLoading(true);
       const enteredOtp = otp.join('');
-      
+
       // 1. Verify OTP
       const verifyRes = await fetch("http://localhost:5000/api/auth/verify-otp", {
         method: "POST",
@@ -142,7 +142,7 @@ export default function Login({ onAdminLoginSuccess }: LoginProps) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to reset password");
-      
+
       // Success
       setForgotStep("none");
       setIsLogin(true);
@@ -166,9 +166,9 @@ export default function Login({ onAdminLoginSuccess }: LoginProps) {
             {forgotStep !== 'none' ? "Reset Password" : `Turf Owner ${isLogin ? "Login" : "Register"}`}
           </h1>
           <p className="text-slate-500 text-sm">
-            {forgotStep === 'email' ? "Enter your email to receive a reset code" : 
-             forgotStep === 'reset' ? "Enter the verification code and new password" : 
-             "Enter your credentials to access the workspace"}
+            {forgotStep === 'email' ? "Enter your email to receive a reset code" :
+              forgotStep === 'reset' ? "Enter the verification code and new password" :
+                "Enter your credentials to access the workspace"}
           </p>
         </div>
 
@@ -360,7 +360,7 @@ export default function Login({ onAdminLoginSuccess }: LoginProps) {
             >
               {loading ? "Processing..." : isLogin ? "Login" : "Register"}
             </button>
-            
+
             <p className="text-sm text-center text-slate-500 mt-4 cursor-pointer hover:underline" onClick={() => { setIsLogin(!isLogin); setOtpStep(false); setError(null); }}>
               {isLogin ? "Don't have an account? Register" : "Already have an account? Login"}
             </p>

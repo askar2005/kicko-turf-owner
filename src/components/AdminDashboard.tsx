@@ -29,7 +29,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
       try {
         const profile = JSON.parse(adminProfileStr);
         return profile.id;
-      } catch {}
+      } catch { }
     }
     return '';
   })();
@@ -39,7 +39,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
       try {
         const profile = JSON.parse(adminProfileStr);
         return profile.name || "Owner";
-      } catch {}
+      } catch { }
     }
     return "Owner";
   })();
@@ -49,7 +49,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
       try {
         const profile = JSON.parse(adminProfileStr);
         return profile.role || "OWNER";
-      } catch {}
+      } catch { }
     }
     return 'UNKNOWN';
   })();
@@ -67,7 +67,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
           if (profile && profile.token) {
             return { "Authorization": `Bearer ${profile.token}` };
           }
-        } catch {}
+        } catch { }
       }
       return {};
     };
@@ -81,39 +81,58 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
         });
         if (!res.ok) return;
         const turfs = await res.json();
-        
+
         const activeTurfId = localStorage.getItem('kicko_active_turf_id');
         let displayTurfs = turfs;
         if (activeTurfId) {
-            displayTurfs = turfs.filter((t: any) => t.id === activeTurfId);
-            if (displayTurfs.length === 0) displayTurfs = turfs;
+          displayTurfs = turfs.filter((t: any) => t.id === activeTurfId);
+          if (displayTurfs.length === 0) displayTurfs = turfs;
         }
 
         setOwnerTurfs(displayTurfs);
-        
+
         let allBookings: any[] = [];
         for (const turf of displayTurfs) {
-           try {
-             const bRes = await fetch(`http://localhost:5000/api/bookings/turf/${turf.id}`, {
-               headers: getAuthHeaders()
-             });
-             if (bRes.ok) {
-                 const turfBookings = await bRes.json();
-                 for (const b of turfBookings) {
-                    allBookings.push({
-                       id: b.id,
-                       date: b.date,
-                       turf: turf.name,
-                       slot: `${b.startTime} - ${b.endTime}`,
-                       user: b.user?.name || b.userId,
-                       userName: b.user?.name || b.userId,
-                       amount: turf.pricePerHour || turf.price || 1200,
-                       status: b.status
-                    });
-                 }
-             }
-           } catch(e) {}
+          try {
+            const bRes = await fetch(`http://localhost:5000/api/bookings/turf/${turf.id}`, {
+              headers: getAuthHeaders()
+            });
+            if (bRes.ok) {
+              const turfBookings = await bRes.json();
+              
+              let slotPricesMap: Record<string, any> = {};
+              try {
+                if (turf.slotPrices) {
+                  slotPricesMap = typeof turf.slotPrices === 'string' ? JSON.parse(turf.slotPrices) : turf.slotPrices;
+                }
+              } catch (e) {}
+
+              for (const b of turfBookings) {
+                const slotStr = `${b.startTime} - ${b.endTime}`;
+                const priceVal = slotPricesMap[slotStr];
+                const slotPrice = priceVal !== undefined ? parseFloat(String(priceVal)) : (turf.pricePerHour || turf.price || 1200);
+
+                allBookings.push({
+                  id: b.id,
+                  date: b.date,
+                  turf: turf.name,
+                  slot: slotStr,
+                  user: b.user?.name || b.userId,
+                  userName: b.user?.name || b.userId,
+                  amount: slotPrice,
+                  status: b.status
+                });
+              }
+            }
+          } catch (e) { }
         }
+
+        allBookings.sort((a, b) => {
+          const dateA = new Date(`${a.date}T${a.slot.split(' - ')[0]}:00`);
+          const dateB = new Date(`${b.date}T${b.slot.split(' - ')[0]}:00`);
+          return dateB.getTime() - dateA.getTime();
+        });
+
         setBookings(allBookings);
       } catch (e) {
         console.error(e);
@@ -134,28 +153,28 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const todayStr = new Date().toISOString().split('T')[0];
   const lastWeekDate = new Date();
   lastWeekDate.setDate(lastWeekDate.getDate() - 7);
-  
+
   let todayBookingsCount = 0;
   let todayRevenue = 0;
   let lastWeekBookingsCount = 0;
 
   bookings.forEach(b => {
-      // Basic check (assuming b.date is YYYY-MM-DD or similar sortable/comparable format, or matches todayStr exactly)
-      // For precision, we parse it:
-      try {
-        const bDateStr = new Date(b.date).toISOString().split('T')[0];
-        if (bDateStr === todayStr) {
-            todayBookingsCount++;
-            todayRevenue += Number(b.amount) || 0;
-        }
-        const bDateObj = new Date(b.date);
-        if (bDateObj >= lastWeekDate && bDateObj <= new Date()) {
-            lastWeekBookingsCount++;
-        }
-      } catch (e) {
-          // fallback if date parsing fails
-          if (b.date === todayStr) todayBookingsCount++;
+    // Basic check (assuming b.date is YYYY-MM-DD or similar sortable/comparable format, or matches todayStr exactly)
+    // For precision, we parse it:
+    try {
+      const bDateStr = new Date(b.date).toISOString().split('T')[0];
+      if (bDateStr === todayStr) {
+        todayBookingsCount++;
+        todayRevenue += Number(b.amount) || 0;
       }
+      const bDateObj = new Date(b.date);
+      if (bDateObj >= lastWeekDate && bDateObj <= new Date()) {
+        lastWeekBookingsCount++;
+      }
+    } catch (e) {
+      // fallback if date parsing fails
+      if (b.date === todayStr) todayBookingsCount++;
+    }
   });
 
   return (
@@ -192,7 +211,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
               onClick={() => navigate('/settings')}
               className="flex items-center gap-2 text-slate-700 hover:text-teal-600 hover:bg-teal-50 px-4 py-2 rounded-full transition-all text-sm font-medium border border-transparent hover:border-teal-100"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-settings"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-settings"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></svg>
               <span className="hidden sm:inline">Settings</span>
             </button>
             <button
@@ -216,19 +235,19 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
           {/* ADD TURF CARD BUTTON (Only show if 0 turfs) */}
           {ownerTurfs.length === 0 && (
-              <button
-                onClick={() => setIsAddTurfOpen(true)}
-                className="group relative overflow-hidden bg-teal-500 text-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-6 flex flex-col justify-between hover:bg-teal-600 transition-all text-left border border-teal-400/50 hover:-translate-y-1"
-              >
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none transition-transform group-hover:scale-110" />
-                <div className="p-3 bg-white/20 text-white w-fit rounded-2xl mb-4 backdrop-blur-sm shadow-sm">
-                  <PlusCircle className="w-6 h-6" />
-                </div>
-                <div className="relative z-10">
-                  <p className="text-xs text-teal-100 font-medium uppercase tracking-wider mb-1">Quick Action</p>
-                  <p className="text-xl font-serif font-bold">Add Turf</p>
-                </div>
-              </button>
+            <button
+              onClick={() => setIsAddTurfOpen(true)}
+              className="group relative overflow-hidden bg-teal-500 text-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-6 flex flex-col justify-between hover:bg-teal-600 transition-all text-left border border-teal-400/50 hover:-translate-y-1"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none transition-transform group-hover:scale-110" />
+              <div className="p-3 bg-white/20 text-white w-fit rounded-2xl mb-4 backdrop-blur-sm shadow-sm">
+                <PlusCircle className="w-6 h-6" />
+              </div>
+              <div className="relative z-10">
+                <p className="text-xs text-teal-100 font-medium uppercase tracking-wider mb-1">Quick Action</p>
+                <p className="text-xl font-serif font-bold">Add Turf</p>
+              </div>
+            </button>
           )}
         </div>
 
@@ -237,7 +256,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
           <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/60 p-6 md:p-8 animate-fade-in">
             <h2 className="text-3xl font-serif text-slate-800 font-bold mb-2">Welcome back, {ownerName}! 👋</h2>
             <p className="text-slate-500 mb-6 font-medium">Here's a quick look at your active turfs on Kicko.</p>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {ownerTurfs.map(turf => (
                 <div
@@ -254,11 +273,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       navigate(`/admin/turf/${turf.id}`);
                     }
                   }}
-                  className={`border border-slate-100 rounded-2xl p-5 bg-white shadow-sm flex items-start gap-4 transition-all ${
-                    turf.status === 'APPROVED'
-                      ? 'hover:-translate-y-0.5 hover:shadow-md cursor-pointer'
-                      : 'opacity-75 cursor-not-allowed'
-                  }`}
+                  className={`border border-slate-100 rounded-2xl p-5 bg-white shadow-sm flex items-start gap-4 transition-all ${turf.status === 'APPROVED'
+                    ? 'hover:-translate-y-0.5 hover:shadow-md cursor-pointer'
+                    : 'opacity-75 cursor-not-allowed'
+                    }`}
                 >
                   <div className="h-16 w-16 bg-teal-50 rounded-xl flex items-center justify-center shrink-0 border border-teal-100">
                     <span className="text-2xl">🏟️</span>

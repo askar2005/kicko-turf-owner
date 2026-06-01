@@ -59,19 +59,7 @@ export default function AddTurfModal({ isOpen, onClose }: AddTurfModalProps) {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        const kycStatus = localStorage.getItem('kicko_kyc_status');
-        if (kycStatus !== 'APPROVED') {
-            onClose();
-            alert('Cannot add turf. KYC Status is not approved.');
-            return;
-        }
 
-        const razorpayAccountId = localStorage.getItem('kicko_razorpay_account_id');
-        if (!razorpayAccountId) {
-            onClose();
-            navigate('/kyc');
-            return;
-        }
 
         const getAuthHeaders = () => {
             const profileStr = localStorage.getItem("kicko_admin_profile");
@@ -81,7 +69,7 @@ export default function AddTurfModal({ isOpen, onClose }: AddTurfModalProps) {
                     if (profile && profile.token) {
                         return { "Authorization": `Bearer ${profile.token}` };
                     }
-                } catch {}
+                } catch { }
             }
             return {};
         };
@@ -116,7 +104,7 @@ export default function AddTurfModal({ isOpen, onClose }: AddTurfModalProps) {
 
             const res = await fetch('http://localhost:5000/api/turfs', {
                 method: 'POST',
-                headers: { 
+                headers: {
                     ...getAuthHeaders()
                 },
                 body: fd
@@ -260,7 +248,7 @@ export default function AddTurfModal({ isOpen, onClose }: AddTurfModalProps) {
 
                         <div className="md:col-span-2 space-y-2">
                             <label className="text-sm font-medium text-slate-600 block ml-1">Turf Images</label>
-                            <div 
+                            <div
                                 className="border-2 border-dashed border-slate-200 hover:border-teal-500 rounded-2xl p-6 text-center cursor-pointer transition-all bg-slate-50/50 hover:bg-teal-50/10 flex flex-col items-center justify-center space-y-2"
                                 onDragOver={(e) => e.preventDefault()}
                                 onDrop={(e) => {
@@ -271,12 +259,12 @@ export default function AddTurfModal({ isOpen, onClose }: AddTurfModalProps) {
                                 }}
                                 onClick={() => document.getElementById('image-upload-input')?.click()}
                             >
-                                <input 
-                                    type="file" 
-                                    id="image-upload-input" 
-                                    multiple 
-                                    accept="image/*" 
-                                    className="hidden" 
+                                <input
+                                    type="file"
+                                    id="image-upload-input"
+                                    multiple
+                                    accept="image/*"
+                                    className="hidden"
                                     onChange={(e) => {
                                         if (e.target.files) {
                                             const files = Array.from(e.target.files);
@@ -352,17 +340,16 @@ export default function AddTurfModal({ isOpen, onClose }: AddTurfModalProps) {
                                 {SLOT_TIMES.map(slot => {
                                     const isActive = activeSlots[slot] ?? false;
                                     return (
-                                        <div 
-                                            key={slot} 
-                                            className={`p-3.5 border rounded-2xl transition-all duration-300 flex flex-col justify-between space-y-3 ${
-                                                isActive 
-                                                    ? 'border-teal-200 bg-teal-50/10 shadow-sm' 
-                                                    : 'border-slate-200 bg-slate-50/30 opacity-70'
-                                            }`}
+                                        <div
+                                            key={slot}
+                                            className={`p-3.5 border rounded-2xl transition-all duration-300 flex flex-col justify-between space-y-3 ${isActive
+                                                ? 'border-teal-200 bg-teal-50/10 shadow-sm'
+                                                : 'border-slate-200 bg-slate-50/30 opacity-70'
+                                                }`}
                                         >
                                             <div className="flex items-center justify-between">
                                                 <span className="text-[11px] font-bold text-slate-500 tracking-wider uppercase">{slot}</span>
-                                                <input 
+                                                <input
                                                     type="checkbox"
                                                     checked={isActive}
                                                     onChange={(e) => {

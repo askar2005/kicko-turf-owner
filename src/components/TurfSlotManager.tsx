@@ -47,14 +47,14 @@ const safeJsonArray = (value: unknown): string[] => {
     const parsed = typeof value === 'string' ? JSON.parse(value) : value;
     return Array.isArray(parsed)
       ? parsed
-          .map((item) => {
-            if (typeof item === 'string') return normalizeSlotLabel(item);
-            if (item && typeof item === 'object' && 'slot' in item) {
-              return normalizeSlotLabel(String((item as any).slot || ''));
-            }
-            return '';
-          })
-          .filter(Boolean)
+        .map((item) => {
+          if (typeof item === 'string') return normalizeSlotLabel(item);
+          if (item && typeof item === 'object' && 'slot' in item) {
+            return normalizeSlotLabel(String((item as any).slot || ''));
+          }
+          return '';
+        })
+        .filter(Boolean)
       : [];
   } catch {
     return [];
@@ -394,11 +394,11 @@ export default function TurfSlotManager() {
                 )}
                 <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
                   {approvedSlots.map((slot) => {
-                  const normalized = normalizeSlotLabel(slot);
-                  const slotState = slotStateMap.get(normalized)?.state;
-                  const isBlocked = slotState === 'BLOCKED';
-                  const isBooked = slotState === 'BOOKED';
-                  const isOwnerBooked = ownerBookedSet.has(normalized);
+                    const normalized = normalizeSlotLabel(slot);
+                    const slotState = slotStateMap.get(normalized)?.state;
+                    const isBlocked = slotState === 'BLOCKED';
+                    const isBooked = slotState === 'BOOKED';
+                    const isOwnerBooked = ownerBookedSet.has(normalized);
 
                     return (
                       <button
@@ -407,15 +407,14 @@ export default function TurfSlotManager() {
                         onClick={(event) => handleSlotClick(event, normalized)}
                         disabled={saving || isBooked}
                         title={isBlocked ? 'Click to unblock this date' : 'Click to mark booked. Hold Shift/Alt and click to block this date.'}
-                        className={`rounded-2xl border p-4 text-left transition-all ${
-                          isBooked
-                            ? 'bg-slate-900 border-slate-800 text-slate-400 cursor-not-allowed line-through'
-                            : isOwnerBooked
-                              ? 'bg-amber-50 border-amber-200 text-amber-800'
-                              : isBlocked
-                                ? 'bg-rose-50 border-rose-200 text-rose-700 cursor-not-allowed line-through'
-                                : 'bg-teal-50/40 border-teal-100 text-slate-800 hover:border-teal-300 hover:-translate-y-0.5'
-                        }`}
+                        className={`rounded-2xl border p-4 text-left transition-all ${isBooked
+                          ? 'bg-slate-900 border-slate-800 text-slate-400 cursor-not-allowed line-through'
+                          : isOwnerBooked
+                            ? 'bg-amber-50 border-amber-200 text-amber-800'
+                            : isBlocked
+                              ? 'bg-rose-50 border-rose-200 text-rose-700 cursor-not-allowed line-through'
+                              : 'bg-teal-50/40 border-teal-100 text-slate-800 hover:border-teal-300 hover:-translate-y-0.5'
+                          }`}
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div>
@@ -430,15 +429,14 @@ export default function TurfSlotManager() {
                                     : 'Available'}
                             </p>
                           </div>
-                          <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
-                            isBooked
-                              ? 'bg-slate-800 text-slate-500'
-                              : isOwnerBooked
-                                ? 'bg-amber-100 text-amber-700'
-                                : isBlocked
-                                  ? 'bg-rose-100 text-rose-600'
-                                  : 'bg-white text-teal-600'
-                          }`}>
+                          <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${isBooked
+                            ? 'bg-slate-800 text-slate-500'
+                            : isOwnerBooked
+                              ? 'bg-amber-100 text-amber-700'
+                              : isBlocked
+                                ? 'bg-rose-100 text-rose-600'
+                                : 'bg-white text-teal-600'
+                            }`}>
                             {isBooked ? <CircleSlash2 className="w-4 h-4" /> : isOwnerBooked ? <Lock className="w-4 h-4" /> : isBlocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
                           </div>
                         </div>
