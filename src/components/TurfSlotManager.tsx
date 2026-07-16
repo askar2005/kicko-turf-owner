@@ -41,6 +41,13 @@ const getLocalDateString = () => {
   return `${year}-${month}-${day}`;
 };
 
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '');
+
+const apiUrl = (path: string) => `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
+
+const isFetchNetworkError = (error: unknown) =>
+  error instanceof TypeError || (error instanceof Error && error.message.toLowerCase().includes('failed to fetch'));
+
 const safeJsonArray = (value: unknown): string[] => {
   if (!value) return [];
   try {
@@ -145,10 +152,7 @@ export default function TurfSlotManager() {
     setError(null);
 
     try {
-      const [turfRes, availabilityRes] = await Promise.all([
-        fetch(`http://localhost:5000/api/turfs/${turfId}`),
-        fetch(`http://localhost:5000/api/turfs/${turfId}/availability?date=${selectedDate}`),
-      ]);
+      const turfRes = await fetch(apiUrl(`/api/turfs/${turfId}`));
 
       if (!turfRes.ok) {
         throw new Error('Failed to load turf');
@@ -160,16 +164,30 @@ export default function TurfSlotManager() {
       turfData.ownerBookedSlots = safeOwnerBooked(turfData.ownerBookedSlots);
       setTurf(turfData);
 
-      if (availabilityRes.ok) {
-        const av = await availabilityRes.json();
-        setAvailability({
-          activeSlots: safeJsonArray(av.activeSlots),
-          blockedSlots: safeJsonArray(av.blockedSlots),
-          bookedSlots: safeJsonArray(av.bookedSlots),
-          ownerBookedSlots: safeOwnerBooked(av.ownerBookedSlots),
-          slotStates: safeSlotStates(av.slotStates),
-        });
-      } else {
+      try {
+        const availabilityRes = await fetch(apiUrl(`/api/turfs/${turfId}/availability?date=${selectedDate}`));
+
+        if (availabilityRes.ok) {
+          const av = await availabilityRes.json();
+          setAvailability({
+            activeSlots: safeJsonArray(av.activeSlots),
+            blockedSlots: safeJsonArray(av.blockedSlots),
+            bookedSlots: safeJsonArray(av.bookedSlots),
+            ownerBookedSlots: safeOwnerBooked(av.ownerBookedSlots),
+            slotStates: safeSlotStates(av.slotStates),
+          });
+        } else {
+          console.warn('Availability request failed, using turf fallback data.');
+          setAvailability({
+            activeSlots: safeJsonArray(turfData.activeSlots),
+            blockedSlots: safeJsonArray(turfData.blockedSlots),
+            bookedSlots: [],
+            ownerBookedSlots: safeOwnerBooked(turfData.ownerBookedSlots),
+            slotStates: [],
+          });
+        }
+      } catch (availabilityError) {
+        console.warn('Availability fetch failed, using turf fallback data.', availabilityError);
         setAvailability({
           activeSlots: safeJsonArray(turfData.activeSlots),
           blockedSlots: safeJsonArray(turfData.blockedSlots),
@@ -179,6 +197,11 @@ export default function TurfSlotManager() {
         });
       }
     } catch (e: any) {
+      if (isFetchNetworkError(e)) {
+        setError('Unable to reach the backend. Please make sure the server is running on port 5000.');
+        return;
+      }
+
       setError(e?.message || 'Unable to load slot manager');
     } finally {
       setLoading(false);
@@ -224,7 +247,7 @@ export default function TurfSlotManager() {
 
     try {
       const isOpen = ownerBookedSet.has(normalized);
-      const res = await fetch(`http://localhost:5000/api/turfs/${turfId}/owner-booked-slot`, {
+      const res = await fetch(apiUrl(`/api/turfs/${turfId}/owner-booked-slot`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -247,6 +270,11 @@ export default function TurfSlotManager() {
         ownerBookedSlots: safeOwnerBooked(data.ownerBookedSlots || []),
       }));
     } catch (e: any) {
+      if (isFetchNetworkError(e)) {
+        console.warn('Owner booked slot update failed because the backend could not be reached.', e);
+        return;
+      }
+
       setError(e?.message || 'Failed to update slot');
     } finally {
       setSaving(false);
@@ -268,7 +296,7 @@ export default function TurfSlotManager() {
         ? availability.blockedSlots.filter((item) => normalizeSlotLabel(item) !== normalized)
         : [...availability.blockedSlots, normalized];
 
-      const res = await fetch(`http://localhost:5000/api/turfs/${turfId}/blocked-slots`, {
+      const res = await fetch(apiUrl(`/api/turfs/${turfId}/blocked-slots`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -293,6 +321,11 @@ export default function TurfSlotManager() {
         slotStates: Array.isArray(data.slotStates) ? data.slotStates : availability.slotStates,
       });
     } catch (e: any) {
+      if (isFetchNetworkError(e)) {
+        console.warn('Blocked slot update failed because the backend could not be reached.', e);
+        return;
+      }
+
       setError(e?.message || 'Failed to update blocked slot');
     } finally {
       setSaving(false);
