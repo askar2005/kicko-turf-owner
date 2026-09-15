@@ -130,6 +130,13 @@ export default function AddTurfModal({ isOpen, onClose }: AddTurfModalProps) {
                 window.location.reload();
             } else {
                 const data = await res.json().catch(() => ({}));
+                if (res.status === 401 || res.status === 403) {
+                    alert(`Session Expired: ${data.error || 'Please log in again.'}`);
+                    localStorage.removeItem('kicko_admin_authed');
+                    localStorage.removeItem('kicko_admin_profile');
+                    window.location.href = '/login';
+                    return;
+                }
                 alert(`Failed to create turf: ${data.error || res.statusText || 'Unknown server error'}`);
             }
         } catch (err) {
