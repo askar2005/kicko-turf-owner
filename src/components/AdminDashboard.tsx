@@ -11,7 +11,8 @@ import AdminCharts from './AdminCharts';
 import AdminDatabase from './AdminDatabase';
 import AddTurfModal from './AddTurfModal';
 import BogoOfferManager from './BogoOfferManager';
-import { PlusCircle, Camera } from 'lucide-react';
+import TournamentManager from './TournamentManager';
+import { PlusCircle, Camera, Trophy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface AdminDashboardProps {
@@ -390,6 +391,9 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
             </div>
           )}
         </div>
+
+        {/* TOURNAMENT MANAGEMENT */}
+        <TournamentManager />
 
         {/* BOGO OFFER MANAGER */}
         <BogoOfferManager />
