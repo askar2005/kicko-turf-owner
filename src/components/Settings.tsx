@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Mail, Phone, FileText, ShieldCheck, Settings as SettingsIcon, PlusCircle, MapPin, IndianRupee, Layers } from 'lucide-react';
 import AddTurfModal from './AddTurfModal';
+import BogoOfferManager from './BogoOfferManager';
 
 export default function Settings() {
     const navigate = useNavigate();
@@ -126,6 +127,9 @@ export default function Settings() {
                         </div>
                     </div>
                 )}
+
+                {/* BOGO Offers Section */}
+                <BogoOfferManager />
 
                 {/* Profile Details */}
                 <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/60 p-6 md:p-8">

@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import AdminCharts from './AdminCharts';
 import AdminDatabase from './AdminDatabase';
 import AddTurfModal from './AddTurfModal';
+import BogoOfferManager from './BogoOfferManager';
 import { PlusCircle, Camera } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -389,6 +390,9 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
             </div>
           )}
         </div>
+
+        {/* BOGO OFFER MANAGER */}
+        <BogoOfferManager />
 
         {/* ADMIN ANALYTICS */}
         <div className="bg-transparent mb-6">
